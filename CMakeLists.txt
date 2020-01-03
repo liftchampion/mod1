@@ -15,7 +15,7 @@ include_directories(libraries/glm)
 
 ADD_COMPILE_OPTIONS(-Wall -Wextra)
 
-add_executable(mod1 src/main.cpp)
+add_executable(mod1 src/main.cpp src/vulkaner.h)
 
 target_link_libraries(mod1 "${CMAKE_CURRENT_SOURCE_DIR}/libraries/glfw-3.3.1.bin.MACOS/lib-macos/libglfw.3.dylib") # TODO
 target_link_libraries(mod1 ${Vulkan_LIBRARY}) # TODO
