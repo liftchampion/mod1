@@ -61,6 +61,7 @@ protected:
 
 	struct QueueFamilyIndices {
 		uint32_t graphicsFamily;
+		uint32_t presentFamily;
 
 		bool isComplete() {
 			return graphicsFamily != -1u;
@@ -215,7 +216,7 @@ protected:
 	}
 
 	QueueFamilyIndices find_queue_families(VkPhysicalDevice device) {
-		QueueFamilyIndices indices = {-1u};
+		QueueFamilyIndices indices = {-1u, -1u};
 
 		uint32_t queueFamilyCount = 0;
 		vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
@@ -227,6 +228,12 @@ protected:
 		for (const auto& queueFamily : queueFamilies) {
 			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
 				indices.graphicsFamily = i;
+			}
+			VkBool32 presentSupport = false;
+			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &presentSupport);
+
+			if (presentSupport) {
+				indices.presentFamily = i;
 			}
 			if (indices.isComplete()) {
 				break;
@@ -315,6 +322,13 @@ protected:
 			createInfo.queueFamilyIndexCount = 0; // Optional
 			createInfo.pQueueFamilyIndices = nullptr; // Optional
 		}
+		createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+		createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		createInfo.presentMode = presentMode;
+		createInfo.clipped = VK_TRUE;
+		createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+		VULKAN_TRY(vkCreateSwapchainKHR(_logical_device, &createInfo, nullptr, &_swap_chain));
 	}
 
 	VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
@@ -355,6 +369,7 @@ protected:
 	}
 
 	void cleanup() {
+		vkDestroySwapchainKHR(_logical_device, _swap_chain, nullptr);
 		vkDestroyDevice(_logical_device, nullptr);
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 		vkDestroyInstance(_instance, nullptr);
@@ -371,6 +386,7 @@ protected:
 	VkDevice         _logical_device;
 	VkQueue          _graphics_queue;
 	VkSurfaceKHR     _surface;
+	VkSwapchainKHR   _swap_chain;
 
 	const std::vector<const char*> _required_device_extensions = {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
